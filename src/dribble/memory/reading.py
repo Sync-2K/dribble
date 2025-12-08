@@ -257,6 +257,7 @@ def BuildPlayer(game, player_id, explicit_player_address=None):
             game.base_address + offsets["Base"]["Player Base Address"], 8
         )
         player_base_address = int.from_bytes(player_base_address, byteorder="little")
+        player_address = player_base_address
 
         # Go through the offset chain to get the actual player address
         for offset in offsets["Base"]["Player Offset Chain"]:
@@ -290,11 +291,6 @@ def BuildPlayer(game, player_id, explicit_player_address=None):
             "First Name": ReadUTF16String(game, first_name_address, 40),
             "Last Name": ReadUTF16String(game, last_name_address, 40),
         }
-
-        # TODO: Remove this print statement once we have a better way to show player data
-        # print(f"\n[cyan]Sync2K is reading Player #{player_id}...[/cyan]\n")
-        # print(f"[yellow]First Name: {player_vitals['First Name']}[/yellow]")
-        # print(f"[yellow]Last Name: {player_vitals['Last Name']}[/yellow]")
 
         # Check if the first and last names are valid characters
         if (

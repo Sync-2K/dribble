@@ -12,10 +12,8 @@ offsets = None
 
 # Function to fetch offsets from a JSON file
 def FetchOffsets(file_path):
-    offsets_file = open(file_path, "r")
-    offsets_dict = json.load(offsets_file)
-    offsets_file.close()
-    return offsets_dict
+    with open(file_path, "r") as f:
+        return json.load(f)
 
 
 # Function to format the offsets to hexadecimal
@@ -54,6 +52,7 @@ def FormatOffsets(offsets_dict):
                             )
                     formatted_offsets[category].append(offset)
 
+        print("Formatted offsets successfully.")
         return formatted_offsets
 
     except Exception as e:
@@ -240,8 +239,66 @@ def GetTeamData(game, team_address):
     return team_data
 
 
+def ResolvePlayerArrayBase(game):
+    """Walk the offset chain once and return the player array base address."""
+    player_base_address = game.memory.read_bytes(
+        game.base_address + offsets["Base"]["Player Base Address"], 8
+    )
+    player_base_address = int.from_bytes(player_base_address, byteorder="little")
+    player_address = player_base_address
+
+    for offset in offsets["Base"]["Player Offset Chain"]:
+        offset_value = offset[0]
+        deref_offset = offset[1]
+        if deref_offset:
+            player_address = game.memory.read_bytes(
+                player_base_address + offset_value, 8
+            )
+            player_address = int.from_bytes(player_address, byteorder="little")
+        else:
+            player_address = player_base_address + offset_value
+
+    return player_address
+
+
+def ScanPlayerIndex(game, size=10000, progress_callback=None):
+    """
+    Fast first-pass scan: reads only player names and addresses.
+    Returns {full_name: [address, ...]} for all valid player slots.
+
+    Resolves the array base address once and strides through the slot table,
+    avoiding the repeated offset-chain walk that BuildPlayer does per-player.
+    progress_callback(current, total) is called each iteration if provided.
+    """
+    array_base = ResolvePlayerArrayBase(game)
+    stride = offsets["Base"]["Player Offset Length"]
+    fn_off = offsets["Base"]["Offset First Name"]
+    ln_off = offsets["Base"]["Offset Last Name"]
+
+    index = {}
+    for i in range(size):
+        if progress_callback:
+            progress_callback(i + 1, size)
+
+        player_address = array_base + stride * i
+        try:
+            first = ReadUTF16String(game, player_address + fn_off, 40)
+            last = ReadUTF16String(game, player_address + ln_off, 40)
+        except pymem.exception.MemoryReadError:
+            continue
+
+        if not first and not last:
+            continue
+        if not HasValidCharacters(first) or not HasValidCharacters(last):
+            continue
+
+        index.setdefault(f"{first} {last}", []).append(player_address)
+
+    return index
+
+
 # Get player data from memory and create a Player object
-def BuildPlayer(game, player_id, explicit_player_address=None):
+def BuildPlayer(game, player_id, explicit_player_address=None, array_base=None):
     """
     Builds player data from memory and creates a Player object."
 
@@ -252,31 +309,13 @@ def BuildPlayer(game, player_id, explicit_player_address=None):
     :return: A Player object containing the player's data.
     """
     try:
-        # Find the base address for the player data
-        player_base_address = game.memory.read_bytes(
-            game.base_address + offsets["Base"]["Player Base Address"], 8
-        )
-        player_base_address = int.from_bytes(player_base_address, byteorder="little")
-        player_address = player_base_address
-
-        # Go through the offset chain to get the actual player address
-        for offset in offsets["Base"]["Player Offset Chain"]:
-            offset_value = offset[0]
-            deref_offset = offset[1]
-            if deref_offset:
-                player_address = game.memory.read_bytes(
-                    player_base_address + offset_value, 8
-                )
-                player_address = int.from_bytes(player_address, byteorder="little")
-            else:
-                player_address = player_base_address + offset_value
-
-        # Calculate the specific player address
+        # Resolve the specific player slot address
         if explicit_player_address:
             player_address = explicit_player_address
         else:
-            # Add the player ID to the base address to get the specific player address
-            player_address += offsets["Base"]["Player Offset Length"] * player_id
+            if array_base is None:
+                array_base = ResolvePlayerArrayBase(game)
+            player_address = array_base + offsets["Base"]["Player Offset Length"] * player_id
 
         # Read player team data (address points to team address, where we can then get team details)
         team_address = GetTeamAddress(game, player_address)

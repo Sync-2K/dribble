@@ -5,6 +5,8 @@ from . import BitLengthToByteLength
 # List of categories and what they are written to the game as
 written_in_bytes = ["Attributes"]
 written_in_integers = [
+    "Body",
+    "Face",
     "Vitals",
     "Badges",
     "Tendencies",

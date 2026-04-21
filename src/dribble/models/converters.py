@@ -4692,7 +4692,7 @@ conversion_list = {
         119: "Normal WNBA 8",
         120: "Maite Cazorla",
     },
-    "Spin Jumper": {
+    "Spin Jumper Animation": {
         0: "Basic",
         1: "Basic 2",
         2: "Normal",
@@ -4944,7 +4944,7 @@ conversion_list = {
         18: "Jonas Valanciunas",
         19: "Nikola Vucevic",
     },
-    "Post Hop Shot": {
+    "Post Hop Shot Animation": {
         0: "Big",
         1: "Small",
         2: "Basic",

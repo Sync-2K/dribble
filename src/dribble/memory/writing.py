@@ -34,6 +34,42 @@ def WriteBinaryBytes(game, address, length, value):
     game.memory.write_bytes(address, value, num_bytes)
 
 
+def WriteString(game, address, length, value):
+    """
+    Write a null-padded single-byte string to memory.
+
+    :param game: The game memory writer instance.
+    :param address: The memory address to write to.
+    :param length: The field capacity in bytes.
+    :param value: The string value to write.
+    """
+    if length < 0:
+        raise ValueError("String length cannot be negative.")
+
+    raw = str(value).encode("utf-8", errors="ignore")
+    buffer = raw[:length].ljust(length, b"\x00")
+    game.memory.write_bytes(address, buffer, length)
+
+
+def WriteWString(game, address, length, value):
+    """
+    Write a null-padded UTF-16LE string to memory.
+
+    :param game: The game memory writer instance.
+    :param address: The memory address to write to.
+    :param length: The field capacity in UTF-16 characters.
+    :param value: The string value to write.
+    """
+    if length < 0:
+        raise ValueError("WString length cannot be negative.")
+
+    max_chars = max(length - 1, 0)
+    text = str(value)[:max_chars]
+    buffer = text.encode("utf-16-le", errors="ignore")
+    buffer = buffer[: max_chars * 2].ljust(length * 2, b"\x00")
+    game.memory.write_bytes(address, buffer, length * 2)
+
+
 # Write integers to memory at a specific address
 def WriteInteger(game, address, length, start_bit, value):
     """

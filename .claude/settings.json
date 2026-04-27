@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import json; d=json.load\\(open\\('c:/Users/Development/Documents/VS Projects/Sync Projects/DribbleUpgrader/resources/offsets.json'\\)\\); [print\\(k, '->', len\\(v\\) if isinstance\\(v, list\\) else v\\) for k,v in d.items\\(\\)]\")",
+      "Bash(python -c \"import json; d=json.load\\(open\\('c:/Users/Development/Documents/VS Projects/Sync Projects/DribbleUpgrader/resources/offsets.json'\\)\\); [print\\(s\\) for s in d['Signatures']]\")"
+    ]
+  }
+}

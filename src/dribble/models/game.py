@@ -4,25 +4,19 @@ import json
 
 # Attach to the NBA2K25.exe process and gets its important memory addresses
 class Game:
-    def __init__(self):
+    def __init__(self, process_name: str = "NBA2K25.exe"):
         try:
-            # Attempt to attach to NBA2K25.exe process
-            self.memory = pymem.Pymem("NBA2K25.exe")
+            self.memory = pymem.Pymem(process_name)
             self.module = pymem.process.module_from_name(
-                self.memory.process_handle, "NBA2K25.exe"
+                self.memory.process_handle, process_name
             )
-
-            # Check if the module was found
             if not self.module:
-                raise RuntimeError("Could not find NBA2K25.exe module.")
-
-            # Store the base address
+                raise RuntimeError(f"Could not find module for {process_name}.")
             self.base_address = self.module.lpBaseOfDll
-
         except pymem.exception.PymemError as e:
             raise RuntimeError(f"Memory Error, {str(e)}") from e
         except Exception as e:
-            raise RuntimeError(f"{str(e)}") from e
+            raise RuntimeError(str(e)) from e
 
 
 # A class to represent a player with attributes and methods to manipulate them

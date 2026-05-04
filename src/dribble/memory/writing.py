@@ -1,3 +1,5 @@
+import struct
+
 from rich import print
 
 from . import BitLengthToByteLength
@@ -68,6 +70,12 @@ def WriteWString(game, address, length, value):
     buffer = text.encode("utf-16-le", errors="ignore")
     buffer = buffer[: max_chars * 2].ljust(length * 2, b"\x00")
     game.memory.write_bytes(address, buffer, length * 2)
+
+
+def WriteFloat(game, address, value):
+    """Write a 4-byte little-endian float to memory."""
+    raw = struct.pack('<f', float(value))
+    game.memory.write_bytes(address, raw, 4)
 
 
 # Write integers to memory at a specific address

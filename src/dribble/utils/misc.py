@@ -6,6 +6,23 @@ def HasValidCharacters(text):
     return bool(re.fullmatch(r"[a-zA-Z0-9-'. ]+", text))
 
 
+def ParseHeightToInches(height_str: str) -> int:
+    """Parse a height string like "6'10\"" into total inches."""
+    clean = height_str.replace('"', '').strip()
+    parts = clean.split("'")
+    feet   = int(parts[0])
+    inches = int(parts[1]) if len(parts) > 1 and parts[1] else 0
+    return feet * 12 + inches
+
+
+def ConvertHeightToGameValue(height_str: str) -> int:
+    """
+    Convert a height string (e.g. "6'6\"") to the in-game integer representation.
+    Formula: (height_inches * 2.54) * 100, rounded to nearest int.
+    """
+    return round(ParseHeightToInches(height_str) * 2.54 * 100)
+
+
 # Function to convert an integer to a memory-friendly value
 def ConvertToGameValue(integer, length):
     """
